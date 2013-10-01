@@ -45,7 +45,7 @@
 
 (defun trivial-quit ()
   #+sbcl
-  (sb-ext:quit)
+  (#.(or (find-symbol "EXIT" "SB-EXT") (find-symbol "QUIT" "SB-EXT")))
   #+clisp
   (ext:quit)
   #+ecl
