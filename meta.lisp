@@ -526,43 +526,44 @@
   (let ((n (- (length string1) (length string2))))
     (and (>= n 0) (string= string1 string2 :start1 n))))
 
+(defun mask-word (x)
+  (logand x (1- (ash 1 (* 8 *cell-size*)))))
+
 (definterpreted invert ()
-  (let ((x (pop-integer)))
-    (push (logand (lognot x) (1- (ash 1 (* 8 *cell-size*))))
-	  *control-stack*)))
+  (push (mask-word (lognot (pop-integer))) *control-stack*))
 
 (definterpreted rshift ()
-  (let ((n (pop-integer))
-	(x (pop-integer)))
-    (push (ash x (- n)) *control-stack*)))
+  (let ((n (pop-integer)))
+    (push (ash (pop-integer) (- n)) *control-stack*)))
 
 (definterpreted = ()
-  (let ((x (pop-integer))
-	(y (pop-integer)))
-    (push (if (= x y) -1 0) *control-stack*)))
+  (push (if (= (pop-integer) (pop-integer)) -1 0) *control-stack*))
 
 (definterpreted > ()
-  (let ((x (pop-integer))
-	(y (pop-integer)))
-    (push (if (> y x) -1 0) *control-stack*)))
+  (let ((x (pop-integer)))
+    (push (if (> (pop-integer) x) -1 0) *control-stack*)))
+
+(defun word-found-p (word vocabulary)
+  (member word vocabulary :test #'string-equal))
 
 (defun defined (word)
-  (if (member word *vocabulary* :test #'string=) -1 0))
+  (if (word-found-p word *vocabulary*) -1 0))
 
 (defimmediate [defined] ()
   (push (defined (read-word)) *control-stack*))
 
 (defimmediate [undefined] ()
-  (push (lognot (defined (read-word))) *control-stack*))
+  (interpret-word "[defined]")
+  (push (lognot (pop-integer)) *control-stack*))
 
 (definterpreted include ()
   (interpret-file (read-word)))
 
 (defun skip-until (&rest words)
   (do ((word (read-word) (read-word)))
-      ((some (lambda (x) (string-equal x word)) words))
+      ((word-found-p word words))
     (when (string-equal word "[if]")
-      (skip-until "[then]" "[else]"))))
+      (skip-until "[then]"))))
       
 (defimmediate [if] ()
   (when (zerop (pop-integer))
