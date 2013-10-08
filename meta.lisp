@@ -157,16 +157,33 @@
       (char= char #\Space)
       (char= char #\Newline)))
 
-(let ((table (make-hash-table :test #'equalp)))
-  (defun immediate-word (name)
-    (gethash name table))
-  (defun (setf immediate-word) (fn name)
-    (setf (gethash name table) fn)))
+(defpackage :interpreted
+  (:use)
+  (:export ":" "FORWARD:" "DEFER" "VALUE" "CODE" "ALLOT" "," "'"
+	   "CELLS" "CREATE" "HERE" "+" "-" "CHAR" "VARIABLE" "CELL"
+	   "JMP_BUF" "]" "INVERT" "RSHIFT" "=" ">" "INCLUDE"))
 
-(defmacro defimmediate (name lambda-list &body body)
-  `(eval-when (:execute :compile-toplevel :load-toplevel)
-     (setf (immediate-word ,(string name))
-           (lambda ,lambda-list ,@body))))
+(defpackage :immediate
+  (:use)
+  (:export ";" "IS" "TO" "DOES>" "(" "\\" "LITERAL" "POSTPONE" "POSTCODE"
+	   ".\"" "S\"" "ABORT\"" "IF" "ELSE" "THEN" "DO" "LEAVE" "LOOP"
+	   "+LOOP" "BEGIN" "AGAIN" "WHILE" "REPEAT" "UNTIL" "[CHAR]" "[']"
+	   "CELL" "NAME_LENGTH" "TO_NEXT" "TO_CODE" "TO_DOES" "TO_BODY"
+	   "[" "[DEFINED]" "[UNDEFINED]" "[IF]" "[ELSE]" "[THEN]" ".CS"))
+
+(defmacro defword (name lambda-list &body body)
+  `(progn
+     (setf (get ',name 'args) ,(length lambda-list))
+     (defun ,name ,lambda-list ,@body)))
+
+(defun find-word (word package)
+  (find-symbol (string-upcase word) package))
+
+(defun immediate-word (word)
+  (find-word word "IMMEDIATE"))
+
+(defun interpreted-word (word)
+  (find-word word "INTERPRETED"))
 
 (defun compile-word (word)
   (cond
@@ -178,17 +195,14 @@
     (t
      (emit-word word))))
 
-(defmacro definterpreted (name lambda-list &body body)
-  `(eval-when (:execute :compile-toplevel :load-toplevel)
-     (setf (get ',name 'interpreted) (lambda ,lambda-list ,@body))))
-
 (defun interpret-word (word)
-  (let* ((sym (find-symbol (string-upcase word)))
-	 (fn (and sym (get sym 'interpreted))))
-    (cond
-      (fn			(funcall fn))
-      ((immediate-word word)	(funcall (immediate-word word)))
-      (t			(push word *control-stack*)))))
+  (cond
+    ((interpreted-word word)
+     (funcall (interpreted-word word)))
+    ((immediate-word word)
+     (funcall (immediate-word word)))
+    (t
+     (push word *control-stack*))))
 
 (defun output-header (name code does &optional immediatep)
   (push name *vocabulary*)
@@ -260,72 +274,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(definterpreted |:| ()
-  (setf (fill-pointer *code*) 0)
-  (setq *ip* 0)
-  (setq *this-word* (read-word))
-  (setq *state* 'compile-word))
-  
 (defun immediatep ()
   (and (equal (peek-word) "immediate")
        (read-word)))
-
-;;;definterpreted immediate
-
-(defimmediate |;| ()
-  (emit-word "exit")
-  (output-header *this-word* "dodoes_code" (word-body ":" 13) (immediatep))
-  (do ((end (fill-pointer *code*))
-       (i 0 (1+ i)))
-      ((= i end))
-    (output "  (cell)~A~:[~;,~]" (aref *code* i) (/= (1+ i) end)))
-  (setq *state* 'interpret-word))
-
-(definterpreted |FORWARD:| ()
-  (output-finish)
-  (output "struct word ~A_word;" (mangle-word (read-word))))
-
-(definterpreted defer ()
-  (output-header (read-word) "dodoes_code" (word-body "perform"))
-  (output "  (cell)~A" (tick "abort")))
-
-(defimmediate is ()
-  (emit-literal (word-body (read-word)))
-  (emit-word "!"))
-
-(definterpreted value ()
-  (output-header (read-word) "dodoes_code" (word-body "here" 1))
-  (output "  (cell)~A," (pop *control-stack*)))
-
-(defimmediate to ()
-  (emit-literal (word-body (read-word)))
-  (emit-word "!"))
-
-(defimmediate does> ()
-  (emit-word "(does>)"))
-
-(definterpreted code ()
-  (let* ((name (read-word))
-	 (mangled (format nil "~A_code" (mangle-word name)))
-	 (special-code-p nil))
-    (output-finish)
-    (cond
-      ((equal (read-word) "\\")
-       (let ((ret-type (read-word)))
-	 (setq special-code-p t
-	       mangled (read-word))
-	 (output "~A ~A ~A" ret-type mangled (read-line *input*))))
-      (t
-       (read-line *input*)
-       (output "xt_t * REGPARM ~A (xt_t *IP, struct word *word)" mangled)))
-    (output-line "{")
-    (do ((line (read-line *input*) (read-line *input*)))
-	((equalp (string-trim " " line) "end-code"))
-      (output-line line))
-    (unless special-code-p
-      (output-line "    return IP;"))
-    (output-line "}")
-    (output-header name (format nil "(code_t *)~A" mangled) "0" nil)))
 
 ;;;definterpreted end-code
 
@@ -335,69 +286,8 @@
       (number	x)
       (string	(parse-integer x)))))
 
-(definterpreted allot ()
-  (loop repeat (ceiling (pop-integer) *cell-size*)
-        do (output "  (cell)0,")))
-
-(definterpreted |,| ()
-  (output "  (cell)~A," (pop *control-stack*)))
-
-(definterpreted |'| ()
-  (push (tick (read-word)) *control-stack*))
-
 (defun cells (n)
   (* *cell-size* n))
-
-(definterpreted cells ()
-  (push (cells (pop-integer)) *control-stack*))
-
-(definterpreted create ()
-  (output-header (read-word) "dodoes_code" (word-body "nop" 0)))
-
-(defimmediate |(| ()
-  (do ()
-      ((eql (read-char *input*) #\)))))
-
-(defimmediate \\ ()
-  (do ()
-      ((eql (read-char *input*) #\Newline))))
-
-(defimmediate literal ()
-  (emit-literal (pop *control-stack*)))
-
-(defimmediate postpone ()
-  (let ((word (read-word)))
-    (if (immediate-word word)
-	(emit-word word)
-	(progn
-	  (emit-literal (tick word))
-	  (emit-word ",")))))
-
-(defimmediate postcode ()
-  (emit-literal (format nil "~A_code" (mangle-word (read-word))))
-  (emit-word ","))
-
-(defimmediate |."| ()
-  (let ((string (read-word #\")))
-    (emit-literal (concatenate 'string "\"" (quoted string) "\""))
-    (emit-literal (length string))
-    (emit-word "type")))
-
-(defimmediate |s"| ()
-  (let ((string (read-word #\")))
-    (emit-literal (concatenate 'string "\"" (quoted string) "\""))
-    (emit-literal (length string))))
-
-(defimmediate |abort"| ()
-  (emit-branch "0branch" :unresolved)
-  (let ((string (read-word #\")))
-    (emit-literal (concatenate 'string "\"" (quoted string) "\""))
-    (emit-literal (length string)))
-  (emit-word "cr")
-  (emit-word "type")
-  (emit-word "cr")
-  (emit-word "abort")
-  (resolve-branch))
 
 (defun roll (n list)
   (let ((tail (nthcdr n list)))
@@ -406,31 +296,7 @@
 (defun cs-roll (n)
   (setq *control-stack* (roll n *control-stack*)))
 
-(defimmediate if ()
-  (emit-branch "0branch" :unresolved))
-
-(defimmediate else ()
-  (emit-branch "branch" :unresolved)
-  (cs-roll 1)
-  (resolve-branch))
-
-(defimmediate then ()
-  (resolve-branch))
-
-(definterpreted here ()
-  (push *ip* *control-stack*))
-
 (defvar *leave*)
-
-(defimmediate do ()
-  (emit-word "2>r")
-  (setq *leave* nil)
-  (push *ip* *control-stack*))
-
-(defimmediate leave ()
-  (emit-word "branch")
-  (setq *leave* *ip*)
-  (emit :unresolved))
 
 (defun emit-loop (word)
   (emit-word word)
@@ -440,88 +306,6 @@
     (setq *leave* nil))
   (emit-word "unloop"))
   
-(defimmediate loop ()
-  (emit-literal "1")
-  (emit-loop "(+loop)"))
-
-(defimmediate +loop ()
-  (emit-loop "(+loop)"))
-
-(defimmediate begin ()
-  (push *ip* *control-stack*))
-
-(defimmediate again ()
-  (emit-branch "branch" (pop *control-stack*)))
-
-(defimmediate while ()
-  (emit-branch "0branch" :unresolved)
-  (cs-roll 1))
-
-(defimmediate repeat ()
-  (emit-branch "branch" (pop *control-stack*))
-  (resolve-branch))
-
-(defimmediate until ()
-  (emit-branch "0branch" (pop *control-stack*)))
-
-(definterpreted + ()
-  (let ((n2 (pop *control-stack*))
-	(n1 (pop *control-stack*)))
-    ;; HUGE UGLY HACK ALERT!
-    (push (+ n1 (floor n2 *cell-size*)) *control-stack*)))
-
-(definterpreted - ()
-  (let ((n2 (pop *control-stack*))
-	(n1 (pop *control-stack*)))
-    (push (- n1 n2) *control-stack*)))
-
-(definterpreted char ()
-  (push (char-code (char (read-word) 0)) *control-stack*))
-
-(defimmediate [char] ()
-  (let ((char (char (read-word) 0)))
-    (emit-literal (cond
-		    ((char= char #\') "'\\''")
-		    ((char= char #\\) "'\\\\'")
-		    (t (format nil "'~A'" char))))))
-
-(defimmediate |[']| ()
-  (emit-literal (tick (read-word))))
-
-(definterpreted variable ()
-  (output-header (read-word) "dodoes_code" (word-body "nop" 0))
-  (output-line "  0"))
-
-(definterpreted cell ()
-  (push *cell-size* *control-stack*))
-
-(defimmediate cell ()
-  (emit-literal *cell-size*))
-
-(definterpreted jmp_buf ()
-  (push *jmp_buf-size* *control-stack*))
-
-(defimmediate name_length ()
-  (emit-literal *name-size*))
-
-(defimmediate to_next ()
-  (emit-literal *next-offset*))
-
-(defimmediate to_code ()
-  (emit-literal *code-offset*))
-
-(defimmediate to_does ()
-  (emit-literal *does-offset*))
-
-(defimmediate to_body ()
-  (emit-literal *body-offset*))
-
-(defimmediate |[| ()
-  (setq *state* 'interpret-word))
-
-(definterpreted |]| ()
-  (setq *state* 'compile-word))
-
 (defun ends-with-p (string1 string2)
   (let ((n (- (length string1) (length string2))))
     (and (>= n 0) (string= string1 string2 :start1 n))))
@@ -529,35 +313,11 @@
 (defun mask-word (x)
   (logand x (1- (ash 1 (* 8 *cell-size*)))))
 
-(definterpreted invert ()
-  (push (mask-word (lognot (pop-integer))) *control-stack*))
-
-(definterpreted rshift ()
-  (let ((n (pop-integer)))
-    (push (ash (pop-integer) (- n)) *control-stack*)))
-
-(definterpreted = ()
-  (push (if (= (pop-integer) (pop-integer)) -1 0) *control-stack*))
-
-(definterpreted > ()
-  (let ((x (pop-integer)))
-    (push (if (> (pop-integer) x) -1 0) *control-stack*)))
-
 (defun word-found-p (word vocabulary)
   (member word vocabulary :test #'string-equal))
 
 (defun defined (word)
   (if (word-found-p word *vocabulary*) -1 0))
-
-(defimmediate [defined] ()
-  (push (defined (read-word)) *control-stack*))
-
-(defimmediate [undefined] ()
-  (interpret-word "[defined]")
-  (push (lognot (pop-integer)) *control-stack*))
-
-(definterpreted include ()
-  (interpret-file (read-word)))
 
 (defun skip-until (&rest words)
   (do ((word (read-word) (read-word)))
@@ -565,18 +325,4 @@
     (when (string-equal word "[if]")
       (skip-until "[then]"))))
       
-(defimmediate [if] ()
-  (when (zerop (pop-integer))
-    (skip-until "[then]" "[else]")))
-
-(defimmediate [else] ()
-  (skip-until "[then]"))
-
-(defimmediate [then] ()
-  nil)
-
-;;; Print control stack.
-(defimmediate .cs ()
-  (format *trace-output* "<~D> " (length *control-stack*))
-  (dolist (x (reverse *control-stack*))
-    (format *trace-output* "~A " x)))
+(load "lisp/words.lisp")
