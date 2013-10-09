@@ -83,7 +83,8 @@
   (unless (stringp string)
     (setq string (format nil "~A" string)))
   (vector-push-extend string *code*)
-  (incf *ip*))
+  (incf *ip*)
+  (values))
 
 (defun trunc-word (word)
   (subseq word 0 (min (length word) (1- *name-size*))))
@@ -114,14 +115,16 @@
   (emit dest))
 
 (defun resolve-branch (&optional (orig (pop *control-stack*)))
-  (setf (aref *code* orig) (branch-target *ip*)))
+  (setf (aref *code* orig) (branch-target *ip*))
+  (values))
 
 (defun output (format &rest args)
   (output-line (apply #'format nil format args)))
 
 (defun output-line (line)
   (fresh-line *output*)
-  (write-line line *output*))
+  (write-line line *output*)
+  (values))
 
 (defun output-name (files)
   (merge-pathnames (make-pathname :type "c") (car (last files))))
@@ -195,7 +198,8 @@
 	(lambda-list (get word 'args) (rest lambda-list))
 	(arg (first lambda-list) (first lambda-list)))
        ((null lambda-list)
-	(apply word args))
+	(let ((value (apply word args)))
+	  (and value (push value *control-stack*))))
     (if (eq arg '&parse)
 	(setq args (nconc args (list (read-word)))
 	      lambda-list (rest lambda-list))
@@ -211,7 +215,8 @@
      (execute (immediate-word word)))
     ((multiple-value-bind (i p) (parse-integer word :junk-allowed t)
        (when (and i (= p (length word)))
-	 (emit-literal i))))
+	 (emit-literal i)
+	 t)))
     (t
      (emit-word word))))
 
@@ -300,15 +305,13 @@
 
 ;;;definterpreted end-code
 
-(defun cells (n)
-  (* *cell-size* n))
-
 (defun roll (n list)
   (let ((tail (nthcdr n list)))
     (append (list (first tail)) (ldiff list tail) (rest tail))))
 
 (defun cs-roll (n)
-  (setq *control-stack* (roll n *control-stack*)))
+  (setq *control-stack* (roll n *control-stack*))
+  (values))
 
 (defvar *leave*)
 
@@ -329,9 +332,6 @@
 
 (defun word-found-p (word vocabulary)
   (member word vocabulary :test #'string-equal))
-
-(defun defined (word)
-  (if (word-found-p word *vocabulary*) -1 0))
 
 (defun skip-until (&rest words)
   (do ((word (read-word) (read-word)))

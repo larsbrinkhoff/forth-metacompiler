@@ -1,8 +1,10 @@
 (defword immediate:[ ()
-  (setq *state* 'interpret-word))
+  (setq *state* 'interpret-word)
+  (values))
 
 (defword interpreted:] ()
-  (setq *state* 'compile-word))
+  (setq *state* 'compile-word)
+  (values))
 
 (defword interpreted:|:| (&parse name)
   (setf (fill-pointer *code*) 0)
@@ -77,10 +79,10 @@
   (output "  (cell)~A," x))
 
 (defword interpreted:|'| (&parse name)
-  (push (tick name) *control-stack*))
+  (tick name))
 
 (defword interpreted:cells (u)
-  (push (cells u) *control-stack*))
+  (* *cell-size* u))
 
 (defword interpreted:create (&parse name)
   (output-header name "dodoes_code" (word-body "nop" 0)))
@@ -141,14 +143,15 @@
   (immediate:then))
 
 (defword interpreted:here ()
-  (push *ip* *control-stack*))
+  *ip*)
 
 (defvar *leave*)
 
 (defword immediate:do ()
   (emit-word "2>r")
   (setq *leave* nil)
-  (push *ip* *control-stack*))
+  (push *ip* *control-stack*)
+  (values))
 
 (defword immediate:leave ()
   (emit-word "branch")
@@ -163,7 +166,7 @@
   (emit-loop "(+loop)"))
 
 (defword immediate:begin ()
-  (push *ip* *control-stack*))
+  *ip*)
 
 (defword immediate:again (x)
   (emit-branch "branch" x))
@@ -181,13 +184,13 @@
 
 (defword interpreted:+ (n1 n2)
   ;; HUGE UGLY HACK ALERT!
-  (push (+ n1 (floor n2 *cell-size*)) *control-stack*))
+  (+ n1 (floor n2 *cell-size*)))
 
 (defword interpreted:- (n1 n2)
-  (push (- n1 n2) *control-stack*))
+  (- n1 n2))
 
 (defword interpreted:char (&parse name)
-  (push (char-code (char name 0)) *control-stack*))
+  (char-code (char name 0)))
 
 (defword immediate:[char] (&parse name)
   (let ((char (char name 0)))
@@ -204,13 +207,13 @@
   (output-line "  0"))
 
 (defword interpreted:cell ()
-  (push *cell-size* *control-stack*))
+  *cell-size*)
 
 (defword immediate:cell ()
   (emit-literal *cell-size*))
 
 (defword interpreted:jmp_buf ()
-  (push *jmp_buf-size* *control-stack*))
+  *jmp_buf-size*)
 
 (defword immediate:name_length ()
   (emit-literal *name-size*))
@@ -228,23 +231,22 @@
   (emit-literal *body-offset*))
 
 (defword interpreted:invert (u)
-  (push (mask-word (lognot u)) *control-stack*))
+  (mask-word (lognot u)))
 
 (defword interpreted:rshift (n u)
-  (push (ash n (- u)) *control-stack*))
+  (ash n (- u)))
 
 (defword interpreted:= (n1 n2)
-  (push (if (=  n1 n2) -1 0) *control-stack*))
+  (if (=  n1 n2) -1 0))
 
 (defword interpreted:> (n1 n2)
-  (push (if (> n1 n2) -1 0) *control-stack*))
+  (if (> n1 n2) -1 0))
 
 (defword immediate:[defined] (&parse name)
-  (push (defined name) *control-stack*))
+  (if (word-found-p name *vocabulary*) -1 0))
 
 (defword immediate:[undefined] (&parse name)
-  (immediate:[defined] name)
-  (interpreted:invert (pop *control-stack*)))
+  (interpreted:invert (immediate:[defined] name)))
 
 (defword interpreted:include (&parse name)
   (interpret-file name))
