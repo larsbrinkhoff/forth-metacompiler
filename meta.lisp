@@ -185,10 +185,14 @@
 (defun interpreted-word (word)
   (find-word word "INTERPRETED"))
 
+(defun execute (word)
+  (let ((args (loop repeat (get word 'args) collect (pop *control-stack*))))
+    (apply word (nreverse args))))
+
 (defun compile-word (word)
   (cond
     ((immediate-word word)
-     (funcall (immediate-word word)))
+     (execute (immediate-word word)))
     ((multiple-value-bind (i p) (parse-integer word :junk-allowed t)
        (when (and i (= p (length word)))
 	 (emit-literal i))))
@@ -198,9 +202,9 @@
 (defun interpret-word (word)
   (cond
     ((interpreted-word word)
-     (funcall (interpreted-word word)))
+     (execute (interpreted-word word)))
     ((immediate-word word)
-     (funcall (immediate-word word)))
+     (execute (immediate-word word)))
     (t
      (push word *control-stack*))))
 
@@ -280,11 +284,10 @@
 
 ;;;definterpreted end-code
 
-(defun pop-integer ()
-  (let ((x (pop *control-stack*)))
-    (etypecase x
-      (number	x)
-      (string	(parse-integer x)))))
+(defun to-integer (x)
+  (etypecase x
+    (number	x)
+    (string	(parse-integer x))))
 
 (defun cells (n)
   (* *cell-size* n))

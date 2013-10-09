@@ -28,9 +28,9 @@
   (emit-literal (word-body (read-word)))
   (emit-word "!"))
 
-(defword interpreted:value ()
+(defword interpreted:value (x)
   (output-header (read-word) "dodoes_code" (word-body "here" 1))
-  (output "  (cell)~A," (pop *control-stack*)))
+  (output "  (cell)~A," x))
 
 (defword immediate:to ()
   (emit-literal (word-body (read-word)))
@@ -64,18 +64,18 @@
 
 ;;;definterpreted end-code
 
-(defword interpreted:allot ()
-  (loop repeat (ceiling (pop-integer) *cell-size*)
+(defword interpreted:allot (u)
+  (loop repeat (ceiling (to-integer u) *cell-size*)
         do (output "  (cell)0,")))
 
-(defword interpreted:|,| ()
-  (output "  (cell)~A," (pop *control-stack*)))
+(defword interpreted:|,| (x)
+  (output "  (cell)~A," x))
 
 (defword interpreted:|'| ()
   (push (tick (read-word)) *control-stack*))
 
-(defword interpreted:cells ()
-  (push (cells (pop-integer)) *control-stack*))
+(defword interpreted:cells (u)
+  (push (cells (to-integer u)) *control-stack*))
 
 (defword interpreted:create ()
   (output-header (read-word) "dodoes_code" (word-body "nop" 0)))
@@ -88,8 +88,8 @@
   (do ()
       ((eql (read-char *input*) #\Newline))))
 
-(defword immediate:literal ()
-  (emit-literal (pop *control-stack*)))
+(defword immediate:literal (x)
+  (emit-literal x))
 
 (defword immediate:postpone ()
   (let ((word (read-word)))
@@ -161,30 +161,26 @@
 (defword immediate:begin ()
   (push *ip* *control-stack*))
 
-(defword immediate:again ()
-  (emit-branch "branch" (pop *control-stack*)))
+(defword immediate:again (x)
+  (emit-branch "branch" x))
 
 (defword immediate:while ()
   (emit-branch "0branch" :unresolved)
   (cs-roll 1))
 
-(defword immediate:repeat ()
-  (emit-branch "branch" (pop *control-stack*))
+(defword immediate:repeat (x)
+  (emit-branch "branch" x)
   (resolve-branch))
 
-(defword immediate:until ()
-  (emit-branch "0branch" (pop *control-stack*)))
+(defword immediate:until (x)
+  (emit-branch "0branch" x))
 
-(defword interpreted:+ ()
-  (let ((n2 (pop *control-stack*))
-	(n1 (pop *control-stack*)))
-    ;; HUGE UGLY HACK ALERT!
-    (push (+ n1 (floor n2 *cell-size*)) *control-stack*)))
+(defword interpreted:+ (n1 n2)
+  ;; HUGE UGLY HACK ALERT!
+  (push (+ n1 (floor n2 *cell-size*)) *control-stack*))
 
-(defword interpreted:- ()
-  (let ((n2 (pop *control-stack*))
-	(n1 (pop *control-stack*)))
-    (push (- n1 n2) *control-stack*)))
+(defword interpreted:- (n1 n2)
+  (push (- n1 n2) *control-stack*))
 
 (defword interpreted:char ()
   (push (char-code (char (read-word) 0)) *control-stack*))
@@ -233,32 +229,30 @@
 (defword interpreted:|]| ()
   (setq *state* 'compile-word))
 
-(defword interpreted:invert ()
-  (push (mask-word (lognot (pop-integer))) *control-stack*))
+(defword interpreted:invert (u)
+  (push (mask-word (lognot (to-integer u))) *control-stack*))
 
-(defword interpreted:rshift ()
-  (let ((n (pop-integer)))
-    (push (ash (pop-integer) (- n)) *control-stack*)))
+(defword interpreted:rshift (u n)
+  (push (ash (to-integer u) (- (to-integer n))) *control-stack*))
 
-(defword interpreted:= ()
-  (push (if (= (pop-integer) (pop-integer)) -1 0) *control-stack*))
+(defword interpreted:= (x1 x2)
+  (push (if (= (to-integer x1) (to-integer x2)) -1 0) *control-stack*))
 
-(defword interpreted:> ()
-  (let ((x (pop-integer)))
-    (push (if (> (pop-integer) x) -1 0) *control-stack*)))
+(defword interpreted:> (n1 n2)
+  (push (if (> (to-integer n1) (to-integer n2)) -1 0) *control-stack*))
 
 (defword immediate:[defined] ()
   (push (defined (read-word)) *control-stack*))
 
 (defword immediate:[undefined] ()
-  (interpret-word "[defined]")
-  (push (lognot (pop-integer)) *control-stack*))
+  (immediate:[defined])
+  (push (lognot (pop *control-stack*)) *control-stack*))
 
 (defword interpreted:include ()
   (interpret-file (read-word)))
       
-(defword immediate:[if] ()
-  (when (zerop (pop-integer))
+(defword immediate:[if] (x)
+  (when (zerop (to-integer x))
     (skip-until "[then]" "[else]")))
 
 (defword immediate:[else] ()
