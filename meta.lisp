@@ -173,8 +173,8 @@
 
 (defmacro defword (name lambda-list &body body)
   `(progn
-     (setf (get ',name 'args) ,(length lambda-list))
-     (defun ,name ,lambda-list ,@body)))
+     (setf (get ',name 'args) ',lambda-list)
+     (defun ,name ,(remove '&parse lambda-list) ,@body)))
 
 (defun find-word (word package)
   (find-symbol (string-upcase word) package))
@@ -185,9 +185,25 @@
 (defun interpreted-word (word)
   (find-word word "INTERPRETED"))
 
+(defun to-integer (x)
+  (etypecase x
+    (number	x)
+    (string	(parse-integer x))))
+
 (defun execute (word)
-  (let ((args (loop repeat (get word 'args) collect (pop *control-stack*))))
-    (apply word (nreverse args))))
+  (do* ((args nil)
+	(lambda-list (get word 'args) (rest lambda-list))
+	(arg (first lambda-list) (first lambda-list)))
+       ((null lambda-list)
+	(apply word args))
+    (if (eq arg '&parse)
+	(setq args (nconc args (list (read-word)))
+	      lambda-list (rest lambda-list))
+	(let ((datum (pop *control-stack*))
+	      (type (char (symbol-name arg) 0)))
+	  (when (member type '(#\N #\U))
+	    (setq datum (to-integer datum)))
+	  (push datum args)))))
 
 (defun compile-word (word)
   (cond
@@ -283,11 +299,6 @@
        (read-word)))
 
 ;;;definterpreted end-code
-
-(defun to-integer (x)
-  (etypecase x
-    (number	x)
-    (string	(parse-integer x))))
 
 (defun cells (n)
   (* *cell-size* n))

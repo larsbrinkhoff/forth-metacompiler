@@ -1,8 +1,14 @@
-(defword interpreted:|:| ()
+(defword immediate:[ ()
+  (setq *state* 'interpret-word))
+
+(defword interpreted:] ()
+  (setq *state* 'compile-word))
+
+(defword interpreted:|:| (&parse name)
   (setf (fill-pointer *code*) 0)
   (setq *ip* 0)
-  (setq *this-word* (read-word))
-  (setq *state* 'compile-word))
+  (setq *this-word* name)
+  (interpreted:]))
 
 (defword immediate:|;| ()
   (emit-word "exit")
@@ -11,38 +17,37 @@
        (i 0 (1+ i)))
       ((= i end))
     (output "  (cell)~A~:[~;,~]" (aref *code* i) (/= (1+ i) end)))
-  (setq *state* 'interpret-word))
+  (immediate:[))
 
 ;;; (defword interpreted:immediate ()
 ;;;   ...)
 
-(defword interpreted:|FORWARD:| ()
+(defword interpreted:|FORWARD:| (&parse name)
   (output-finish)
-  (output "struct word ~A_word;" (mangle-word (read-word))))
+  (output "struct word ~A_word;" (mangle-word name)))
 
-(defword interpreted:defer ()
-  (output-header (read-word) "dodoes_code" (word-body "perform"))
+(defword interpreted:defer (&parse name)
+  (output-header name "dodoes_code" (word-body "perform"))
   (output "  (cell)~A" (tick "abort")))
 
-(defword immediate:is ()
-  (emit-literal (word-body (read-word)))
+(defword immediate:is (&parse name)
+  (emit-literal (word-body name))
   (emit-word "!"))
 
-(defword interpreted:value (x)
-  (output-header (read-word) "dodoes_code" (word-body "here" 1))
+(defword interpreted:value (x &parse name)
+  (output-header name "dodoes_code" (word-body "here" 1))
   (output "  (cell)~A," x))
 
-(defword immediate:to ()
-  (emit-literal (word-body (read-word)))
+(defword immediate:to (&parse name)
+  (emit-literal (word-body name))
   (emit-word "!"))
 
 (defword immediate:does> ()
   (emit-word "(does>)"))
 
-(defword interpreted:code ()
-  (let* ((name (read-word))
-	 (mangled (format nil "~A_code" (mangle-word name)))
-	 (special-code-p nil))
+(defword interpreted:code (&parse name)
+  (let ((mangled (format nil "~A_code" (mangle-word name)))
+	(special-code-p nil))
     (output-finish)
     (cond
       ((equal (read-word) "\\")
@@ -65,20 +70,20 @@
 ;;;definterpreted end-code
 
 (defword interpreted:allot (u)
-  (loop repeat (ceiling (to-integer u) *cell-size*)
+  (loop repeat (ceiling u *cell-size*)
         do (output "  (cell)0,")))
 
 (defword interpreted:|,| (x)
   (output "  (cell)~A," x))
 
-(defword interpreted:|'| ()
-  (push (tick (read-word)) *control-stack*))
+(defword interpreted:|'| (&parse name)
+  (push (tick name) *control-stack*))
 
 (defword interpreted:cells (u)
-  (push (cells (to-integer u)) *control-stack*))
+  (push (cells u) *control-stack*))
 
-(defword interpreted:create ()
-  (output-header (read-word) "dodoes_code" (word-body "nop" 0)))
+(defword interpreted:create (&parse name)
+  (output-header name "dodoes_code" (word-body "nop" 0)))
 
 (defword immediate:|(| ()
   (do ()
@@ -91,16 +96,15 @@
 (defword immediate:literal (x)
   (emit-literal x))
 
-(defword immediate:postpone ()
-  (let ((word (read-word)))
-    (if (immediate-word word)
-	(emit-word word)
-	(progn
-	  (emit-literal (tick word))
-	  (emit-word ",")))))
+(defword immediate:postpone (&parse name)
+  (if (immediate-word name)
+      (emit-word name)
+      (progn
+	(emit-literal (tick name))
+	(emit-word ","))))
 
-(defword immediate:postcode ()
-  (emit-literal (format nil "~A_code" (mangle-word (read-word))))
+(defword immediate:postcode (&parse name)
+  (emit-literal (format nil "~A_code" (mangle-word name)))
   (emit-word ","))
 
 (defword immediate:|."| ()
@@ -128,13 +132,13 @@
 (defword immediate:if ()
   (emit-branch "0branch" :unresolved))
 
+(defword immediate:then ()
+  (resolve-branch))
+
 (defword immediate:else ()
   (emit-branch "branch" :unresolved)
   (cs-roll 1)
-  (resolve-branch))
-
-(defword immediate:then ()
-  (resolve-branch))
+  (immediate:then))
 
 (defword interpreted:here ()
   (push *ip* *control-stack*))
@@ -182,21 +186,21 @@
 (defword interpreted:- (n1 n2)
   (push (- n1 n2) *control-stack*))
 
-(defword interpreted:char ()
-  (push (char-code (char (read-word) 0)) *control-stack*))
+(defword interpreted:char (&parse name)
+  (push (char-code (char name 0)) *control-stack*))
 
-(defword immediate:[char] ()
-  (let ((char (char (read-word) 0)))
+(defword immediate:[char] (&parse name)
+  (let ((char (char name 0)))
     (emit-literal (cond
 		    ((char= char #\') "'\\''")
 		    ((char= char #\\) "'\\\\'")
 		    (t (format nil "'~A'" char))))))
 
-(defword immediate:|[']| ()
-  (emit-literal (tick (read-word))))
+(defword immediate:|[']| (&parse name)
+  (emit-literal (tick name)))
 
-(defword interpreted:variable ()
-  (output-header (read-word) "dodoes_code" (word-body "nop" 0))
+(defword interpreted:variable (&parse name)
+  (output-header name "dodoes_code" (word-body "nop" 0))
   (output-line "  0"))
 
 (defword interpreted:cell ()
@@ -223,36 +227,30 @@
 (defword immediate:to_body ()
   (emit-literal *body-offset*))
 
-(defword immediate:|[| ()
-  (setq *state* 'interpret-word))
-
-(defword interpreted:|]| ()
-  (setq *state* 'compile-word))
-
 (defword interpreted:invert (u)
-  (push (mask-word (lognot (to-integer u))) *control-stack*))
+  (push (mask-word (lognot u)) *control-stack*))
 
-(defword interpreted:rshift (u n)
-  (push (ash (to-integer u) (- (to-integer n))) *control-stack*))
+(defword interpreted:rshift (n u)
+  (push (ash n (- u)) *control-stack*))
 
-(defword interpreted:= (x1 x2)
-  (push (if (= (to-integer x1) (to-integer x2)) -1 0) *control-stack*))
+(defword interpreted:= (n1 n2)
+  (push (if (=  n1 n2) -1 0) *control-stack*))
 
 (defword interpreted:> (n1 n2)
-  (push (if (> (to-integer n1) (to-integer n2)) -1 0) *control-stack*))
+  (push (if (> n1 n2) -1 0) *control-stack*))
 
-(defword immediate:[defined] ()
-  (push (defined (read-word)) *control-stack*))
+(defword immediate:[defined] (&parse name)
+  (push (defined name) *control-stack*))
 
-(defword immediate:[undefined] ()
-  (immediate:[defined])
-  (push (lognot (pop *control-stack*)) *control-stack*))
+(defword immediate:[undefined] (&parse name)
+  (immediate:[defined] name)
+  (interpreted:invert (pop *control-stack*)))
 
-(defword interpreted:include ()
-  (interpret-file (read-word)))
+(defword interpreted:include (&parse name)
+  (interpret-file name))
       
-(defword immediate:[if] (x)
-  (when (zerop (to-integer x))
+(defword immediate:[if] (n)
+  (when (zerop n)
     (skip-until "[then]" "[else]")))
 
 (defword immediate:[else] ()
