@@ -109,27 +109,17 @@
   (emit-literal (format nil "~A_code" (mangle-word name)))
   (emit-word ","))
 
-(defword immediate:|."| ()
-  (let ((string (read-word #\")))
-    (emit-literal (concatenate 'string "\"" (quoted string) "\""))
-    (emit-literal (length string))
-    (emit-word "type")))
-
 (defword immediate:|S"| ()
   (let ((string (read-word #\")))
     (emit-literal (concatenate 'string "\"" (quoted string) "\""))
     (emit-literal (length string))))
 
-(defword immediate:|ABORT"| ()
-  (emit-branch "0branch" :unresolved)
-  (let ((string (read-word #\")))
-    (emit-literal (concatenate 'string "\"" (quoted string) "\""))
-    (emit-literal (length string)))
-  (emit-word "cr")
-  (emit-word "type")
-  (emit-word "cr")
-  (emit-word "abort")
-  (resolve-branch))
+(defword immediate:|."| ()
+  (immediate:|S"|)
+  (emit-word "type"))
+
+(defword immediate:ahead ()
+  (emit-branch "branch" :unresolved))
 
 (defword immediate:if ()
   (emit-branch "0branch" :unresolved))
@@ -138,8 +128,17 @@
   (resolve-branch))
 
 (defword immediate:else ()
-  (emit-branch "branch" :unresolved)
+  (immediate:ahead)
   (cs-roll 1)
+  (immediate:then))
+
+(defword immediate:|ABORT"| ()
+  (immediate:if)
+  (immediate:|S"|)
+  (emit-word "cr")
+  (emit-word "type")
+  (emit-word "cr")
+  (emit-word "abort")
   (immediate:then))
 
 (defword interpreted:here ()
@@ -150,13 +149,12 @@
 (defword immediate:do ()
   (emit-word "2>r")
   (setq *leave* nil)
-  (push *ip* *control-stack*)
-  (values))
+  (interpreted:here))
 
 (defword immediate:leave ()
-  (emit-word "branch")
-  (setq *leave* *ip*)
-  (emit :unresolved))
+  (immediate:ahead)
+  (setq *leave* (pop *control-stack*))
+  (values))
 
 (defword immediate:loop ()
   (emit-literal "1")
@@ -166,18 +164,18 @@
   (emit-loop "(+loop)"))
 
 (defword immediate:begin ()
-  *ip*)
+  (interpreted:here))
 
 (defword immediate:again (x)
   (emit-branch "branch" x))
 
 (defword immediate:while ()
-  (emit-branch "0branch" :unresolved)
+  (immediate:if)
   (cs-roll 1))
 
 (defword immediate:repeat (x)
-  (emit-branch "branch" x)
-  (resolve-branch))
+  (immediate:again x)
+  (immediate:then))
 
 (defword immediate:until (x)
   (emit-branch "0branch" x))
