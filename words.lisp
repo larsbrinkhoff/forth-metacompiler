@@ -7,18 +7,18 @@
   (values))
 
 (defword interpreted:|:| (&parse name)
-  (setf (fill-pointer *code*) 0)
-  (setq *ip* 0)
+  (setf (fill-pointer *dictionary*) 0)
+  (setq *here* 0)
   (setq *this-word* name)
   (interpreted:]))
 
 (defword immediate:|;| ()
   (emit-word "exit")
   (output-header *this-word* "dodoes_code" (word-body ":" 13) (immediatep))
-  (do ((end (fill-pointer *code*))
+  (do ((end (fill-pointer *dictionary*))
        (i 0 (1+ i)))
       ((= i end))
-    (output "  (cell)~A~:[~;,~]" (aref *code* i) (/= (1+ i) end)))
+    (output "  (cell)~A~:[~;,~]" (aref *dictionary* i) (/= (1+ i) end)))
   (immediate:[))
 
 ;;; (defword interpreted:immediate ()
@@ -142,7 +142,7 @@
   (immediate:then))
 
 (defword interpreted:here ()
-  *ip*)
+  *here*)
 
 (defvar *leave*)
 

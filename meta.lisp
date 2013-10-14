@@ -39,9 +39,9 @@
 (defvar *state* 'interpret-word)
 (defvar *input*)
 (defvar *output*)
-(defvar *ip* 0)
+(defvar *here* 0)
 (defvar *finished-p* t)
-(defvar *code* (make-array '(0) :adjustable t :fill-pointer 0))
+(defvar *dictionary* (make-array 0 :adjustable t :fill-pointer 0))
 
 (defun trivial-quit ()
   #+sbcl
@@ -82,8 +82,8 @@
 (defun emit (string)
   (unless (stringp string)
     (setq string (format nil "~A" string)))
-  (vector-push-extend string *code*)
-  (incf *ip*)
+  (vector-push-extend string *dictionary*)
+  (incf *here*)
   (values))
 
 (defun trunc-word (word)
@@ -110,12 +110,12 @@
 (defun emit-branch (word dest)
   (emit-word word)
   (if (eq dest :unresolved)
-      (push *ip* *control-stack*)
+      (push *here* *control-stack*)
       (setq dest (branch-target dest)))
   (emit dest))
 
 (defun resolve-branch (&optional (orig (pop *control-stack*)))
-  (setf (aref *code* orig) (branch-target *ip*))
+  (setf (aref *dictionary* orig) (branch-target *here*))
   (values))
 
 (defun output (format &rest args)
