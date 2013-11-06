@@ -153,7 +153,7 @@
 
 (defword immediate:leave ()
   (immediate:ahead)
-  (setq *leave* (pop *control-stack*))
+  (push (pop *control-stack*) *leave*)
   (values))
 
 (defword immediate:loop ()

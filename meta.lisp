@@ -318,9 +318,9 @@
 (defun emit-loop (word)
   (emit-word word)
   (emit-branch "0branch" (pop *control-stack*))
-  (when *leave*
-    (resolve-branch *leave*)
-    (setq *leave* nil))
+  (dolist (dest *leave*)
+    (resolve-branch dest))
+  (setq *leave* nil)
   (emit-word "unloop"))
   
 (defun ends-with-p (string1 string2)
