@@ -1,11 +1,11 @@
 #!/bin/sh
 
-FORM="$1"
+FORMS="$*"
 
 try() {
     if type $1 > /dev/null 2>&1; then
-	$1 $2 "$FORM"
-	exit 0
+	$1 $2 "(progn $FORMS)"
+	exit $?
     fi
 }
 
