@@ -98,12 +98,17 @@
 (defword immediate:literal (x)
   (emit-literal x))
 
+(defword immediate:compile (&parse name)
+  (emit-literal (tick name))
+  (emit-word ","))
+
+(defword immediate:[compile] (&parse name)
+  (emit-word name))
+
 (defword immediate:postpone (&parse name)
   (if (immediate-word name)
-      (emit-word name)
-      (progn
-	(emit-literal (tick name))
-	(emit-word ","))))
+      (immediate:[compile] name)
+      (immediate:compile name)))
 
 (defword immediate:postcode (&parse name)
   (emit-literal (format nil "~A_code" (mangle-word name)))
