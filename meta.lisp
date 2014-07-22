@@ -165,7 +165,7 @@
   (:use)
   (:export ":" "FORWARD:" "DEFER" "VALUE" "CODE" "ALLOT" "," "'"
 	   "CELLS" "CREATE" "HERE" "+" "-" "CHAR" "VARIABLE" "CELL"
-	   "JMP_BUF" "]" "INVERT" "RSHIFT" "=" ">" "INCLUDE"))
+	   "JMP_BUF" "]" "INVERT" "RSHIFT" "=" ">" "INCLUDE" "CONSTANT"))
 
 (defpackage :immediate
   (:use)

@@ -40,6 +40,9 @@
   (output-header name "dodoes_code" (word-body "here" 1))
   (output "  (cell)~A," x))
 
+(defword interpreted:constant (x &parse name)
+  (interpreted:value x name))
+
 (defword immediate:to (&parse name)
   (emit-literal (word-body name))
   (emit-word "!"))
