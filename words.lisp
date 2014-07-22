@@ -186,8 +186,7 @@
   (emit-branch "0branch" x))
 
 (defword interpreted:+ (n1 n2)
-  ;; HUGE UGLY HACK ALERT!
-  (+ n1 (floor n2 *cell-size*)))
+  (+ n1 n2))
 
 (defword interpreted:- (n1 n2)
   (- n1 n2))

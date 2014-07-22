@@ -83,7 +83,7 @@
   (unless (stringp string)
     (setq string (format nil "~A" string)))
   (vector-push-extend string *dictionary*)
-  (incf *here*)
+  (incf *here* *cell-size*)
   (values))
 
 (defun trunc-word (word)
@@ -96,7 +96,7 @@
   (format nil "~A.param[~D]" (tick word) n))
 
 (defun branch-target (dest)
-  (word-body *this-word* dest))
+  (word-body *this-word* (floor dest *cell-size*)))
 
 (defun emit-word (word)
   (emit (tick word)))
@@ -115,6 +115,7 @@
   (emit dest))
 
 (defun resolve-branch (&optional (orig (pop *control-stack*)))
+  (setf orig (floor orig *cell-size*))
   (setf (aref *dictionary* orig) (branch-target *here*))
   (values))
 
