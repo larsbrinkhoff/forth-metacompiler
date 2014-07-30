@@ -37,7 +37,7 @@
   (emit-word "!"))
 
 (defword interpreted:value (x &parse name)
-  (output-header name "dodoes_code" (word-body "here" 1))
+  (output-header name "dodoes_code" (word-body "dup" 1))
   (output "  (cell)~A," x))
 
 (defword interpreted:constant (x &parse name)
