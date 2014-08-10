@@ -66,7 +66,7 @@
   (with-open-file (*output* output-file :direction :output
 			                :if-exists :supersede)
     (output-line "#include \"forth.h\"")
-    (output-line "struct word colon_word;")
+    (output-line "extern struct word colon_word;")
     (let ((*previous-word* "0"))
       (dolist (file input-files)
 	(interpret-file file))

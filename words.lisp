@@ -26,7 +26,7 @@
 
 (defword interpreted:|FORWARD:| (&parse name)
   (output-finish)
-  (output "struct word ~A_word;" (mangle-word name)))
+  (output "extern struct word ~A_word;" (mangle-word name)))
 
 (defword interpreted:defer (&parse name)
   (output-header name "dodoes_code" (word-body "perform"))
