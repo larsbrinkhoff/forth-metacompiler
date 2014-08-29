@@ -14,7 +14,7 @@
 
 (defword immediate:|;| ()
   (emit-word "exit")
-  (output-header *this-word* "dodoes_code" (word-body ":" 13) (immediatep))
+  (output-header *this-word* "dodoes_code" (word-body ":" 8) (immediatep))
   (do ((end (fill-pointer *dictionary*))
        (i 0 (1+ i)))
       ((= i end))
