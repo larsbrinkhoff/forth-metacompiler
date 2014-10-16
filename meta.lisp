@@ -163,7 +163,7 @@
 
 (defpackage :interpreted
   (:use)
-  (:export ":" "FORWARD:" "DEFER" "VALUE" "CODE" "ALLOT" "," "'"
+  (:export ":" "FORWARD:" "DEFER" "VALUE" "CODE" "ALLOT" "," "'" ".(" "CR"
 	   "CELLS" "CREATE" "HERE" "+" "-" "CHAR" "VARIABLE" "CELL"
 	   "JMP_BUF" "]" "INVERT" "RSHIFT" "=" ">" "INCLUDE" "CONSTANT"))
 

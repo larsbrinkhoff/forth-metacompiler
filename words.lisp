@@ -117,6 +117,12 @@
   (emit-literal (format nil "~A_code" (mangle-word name)))
   (emit-word ","))
 
+(defword interpreted:cr ()
+  (terpri))
+
+(defword interpreted:|.(| ()
+  (format t ".( ~A )" (read-word #\))))
+
 (defword immediate:|S"| ()
   (let ((string (read-word #\")))
     (emit-literal (concatenate 'string "\"" (quoted string) "\""))
