@@ -13,6 +13,8 @@ try sbcl "--noinform --eval"
 try clisp "-q -x"
 try ecl "-eval"
 try ccl "--eval"
+try wx86cl "--eval"
+try wx86cl64 "--eval"
 
 echo No Lisp found.
 exit 1
