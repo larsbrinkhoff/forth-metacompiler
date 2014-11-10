@@ -52,7 +52,9 @@
   (si:quit)
   #+ccl
   (ccl:quit)
-  #-(or sbcl clisp ecl ccl)
+  #+gcl
+  (lisp:bye)
+  #-(or sbcl clisp ecl ccl gcl)
   (implementation-dependent-quit))
 
 #-ecl
