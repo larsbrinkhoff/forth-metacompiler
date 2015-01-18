@@ -200,6 +200,9 @@
 (defword interpreted:- (n1 n2)
   (- n1 n2))
 
+(defword interpreted:1+ (n)
+  (1+ n))
+
 (defword interpreted:char (&parse name)
   (char-code (char name 0)))
 
