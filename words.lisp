@@ -88,7 +88,7 @@
   (* *cell-size* u))
 
 (defword interpreted:create (&parse name)
-  (output-header name "dodoes_code" (word-body "nop" 0)))
+  (output-header name "dodoes_code" (word-body "noop" 0)))
 
 (defword immediate:|(| ()
   (do ()
@@ -217,7 +217,7 @@
   (emit-literal (tick name)))
 
 (defword interpreted:variable (&parse name)
-  (output-header name "dodoes_code" (word-body "nop" 0))
+  (output-header name "dodoes_code" (word-body "noop" 0))
   (output-line "  0"))
 
 (defword interpreted:cell ()
