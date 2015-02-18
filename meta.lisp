@@ -1,4 +1,4 @@
-;;;; -*- lisp -*- Copyright 2004, 2013 Lars Brinkhoff
+;;;; -*- lisp -*- Copyright 2004, 2013-2015 Lars Brinkhoff
 
 ;;; Meta compiler to C target.
 ;;
