@@ -113,9 +113,8 @@
       (immediate:[compile] name)
       (immediate:compile name)))
 
-(defword immediate:postcode (&parse name)
-  (emit-literal (format nil "~A_code" (mangle-word name)))
-  (emit-word ","))
+(defword immediate:|'DODOES| ()
+  (emit-literal (format nil "~A_code" (mangle-word "dodoes"))))
 
 (defword interpreted:cr ()
   (terpri))
