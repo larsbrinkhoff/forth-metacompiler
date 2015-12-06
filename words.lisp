@@ -12,6 +12,14 @@
   (setq *this-word* name)
   (interpreted:]))
 
+(defun ignore-definition ()
+  (loop until (string= (read-word) ";")))  
+
+(defword interpreted:|?:| (&parse name)
+  (if (word-found-p name *vocabulary*)
+    (ignore-definition)
+    (interpreted:|:| name)))
+
 (defword immediate:|;| ()
   (emit-word "exit")
   (output-header *this-word* "dodoes_code" (word-body ":" 8) (immediatep))
