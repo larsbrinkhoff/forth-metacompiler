@@ -256,6 +256,7 @@
     ((equal name "sp0")		"sp0")
     ((equal name "rp0")		"rp0")
     ((equal name "dp0")		"dp0")
+    ((equal name "latest0")	"latest0")
     ((equal name ">r")		"to_r")
     ((equal name "2>r")		"two_to_r")
     ((equal name "r>")		"r_from")
