@@ -42,6 +42,7 @@
 (defvar *here* 0)
 (defvar *finished-p* t)
 (defvar *dictionary* (make-array 0 :adjustable t :fill-pointer 0))
+(defvar *deferred* nil)
 
 (defun trivial-quit ()
   #+sbcl
@@ -133,6 +134,8 @@
   (merge-pathnames (make-pathname :type "c") (car (last files))))
 
 (defun output-finish ()
+  (when *deferred*
+    (output (shiftf *deferred* nil)))
   (unless *finished-p* ;(string= *previous-word* "0")
     (output-line "} };"))
   (setq *finished-p* t))
@@ -166,7 +169,7 @@
 (defpackage :interpreted
   (:use)
   (:export ":" "?:" "FORWARD:" "DEFER" "VALUE" "CODE" "ALLOT" "," "'" ".(" "CR"
-	   "CELLS" "CREATE" "HERE" "+" "-" "1+" "CHAR" "VARIABLE" "CELL"
+	   "CELLS" "CREATE" "HERE" "+" "-" "1+" "CHAR" "VARIABLE" "CELL" "IS"
 	   "JMP_BUF" "]" "INVERT" "RSHIFT" "=" ">" "INCLUDE" "CONSTANT"))
 
 (defpackage :immediate

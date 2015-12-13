@@ -38,11 +38,16 @@
 
 (defword interpreted:defer (&parse name)
   (output-header name "dodoes_code" (word-body "perform"))
-  (output "  (cell)~A" (tick "abort")))
+  (setq *deferred* (format nil "  (cell)~A" (tick "abort"))))
 
 (defword immediate:is (&parse name)
   (emit-literal (word-body name))
   (emit-word "!"))
+
+(defword interpreted:is (&parse name)
+  (declare (ignore name))
+  (setq *deferred* (format nil "  (cell)~A" (pop *control-stack*)))
+  (values))
 
 (defword interpreted:value (x &parse name)
   (output-header name "dodoes_code" (word-body "dup" 1))
