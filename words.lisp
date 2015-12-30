@@ -75,7 +75,7 @@
 	 (output "~A ~A ~A" ret-type mangled (read-line *input*))))
       (t
        (read-line *input*)
-       (output "xt_t * REGPARM ~A (xt_t *IP, struct word *word)" mangled)))
+       (output "xt_t * REGPARM ~A (xt_t *IP, xt_t word)" mangled)))
     (output-line "{")
     (do ((line (read-line *input*) (read-line *input*)))
 	((equalp (string-trim " " line) "end-code"))
