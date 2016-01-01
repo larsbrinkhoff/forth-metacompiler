@@ -63,13 +63,16 @@
 		output output-line output-name output-finish quoted read-word
 		whitespacep))
 
+(defun output-extern (name)
+  (output "extern struct word ~A_word;" (mangle-word name)))
+
 (defun compile-forth (&rest input-files
 		      &aux
 		      (output-file (output-name input-files)))
   (with-open-file (*output* output-file :direction :output
 			                :if-exists :supersede)
     (output-line "#include \"forth.h\"")
-    (output-line "extern struct word colon_word;")
+    (output-extern "docol,")
     (let ((*previous-word* "0"))
       (dolist (file input-files)
 	(interpret-file file))

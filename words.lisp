@@ -22,7 +22,7 @@
 
 (defword immediate:|;| ()
   (emit-word "exit")
-  (output-header *this-word* "dodoes_code" (word-body ":" 8) (immediatep))
+  (output-header *this-word* "dodoes_code" (word-body "docol," 4) (immediatep))
   (do ((end (fill-pointer *dictionary*))
        (i 0 (1+ i)))
       ((= i end))
@@ -34,7 +34,7 @@
 
 (defword interpreted:|FORWARD:| (&parse name)
   (output-finish)
-  (output "extern struct word ~A_word;" (mangle-word name)))
+  (output-extern name))
 
 (defword interpreted:defer (&parse name)
   (output-header name "dodoes_code" (word-body "perform"))
