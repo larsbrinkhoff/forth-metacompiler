@@ -136,7 +136,7 @@
   (format t ".( ~A )" (read-word #\))))
 
 (defword immediate:|S"| ()
-  (let ((string (read-word #\")))
+  (let ((string (coerce (read-word #\") 'string)))
     (emit-literal (concatenate 'string "\"" (quoted string) "\""))
     (emit-literal (length string))))
 
