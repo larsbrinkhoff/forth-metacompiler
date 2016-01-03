@@ -137,7 +137,11 @@
   (values))
 
 (defun output-name (files)
-  (merge-pathnames (make-pathname :type "c") (car (last files))))
+  (let* ((file (car (last files)))
+	 (pos (position #\/ file)))
+    (when pos
+      (setq file (subseq file (1+ pos))))
+    (merge-pathnames (make-pathname :type "c") file)))
 
 (defun output-finish ()
   (when *deferred*
