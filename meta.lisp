@@ -80,10 +80,13 @@
   (trivial-quit))
 
 (defun interpret-file (file)
-  (with-open-file (*input* file)
-    (do ((word (read-word) (read-word)))
-	((null word))
-      (funcall *state* word))))
+  (loop for path in '("" "src/")
+     for file-path = (concatenate 'string path file)
+     when (probe-file file-path) do
+       (with-open-file (*input* file-path)
+	 (do ((word (read-word) (read-word)))
+	     ((null word))
+	   (funcall *state* word)))))
 
 (defun emit (string)
   (unless (stringp string)
