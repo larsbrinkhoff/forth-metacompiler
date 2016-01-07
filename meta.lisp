@@ -217,14 +217,18 @@
 	  (push datum args)))))
 
 (defun compile-word (word)
+  (print (list :compile word))
   (cond
     ((immediate-word word)
+     (print :immediate)
      (execute (immediate-word word)))
     ((multiple-value-bind (i p) (parse-integer word :junk-allowed t)
+       (print :number)
        (when (and i (= p (length word)))
 	 (emit-literal i)
 	 t)))
     (t
+     (print :normal)
      (emit-word word))))
 
 (defun interpret-word (word)
