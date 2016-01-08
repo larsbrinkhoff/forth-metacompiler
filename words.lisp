@@ -238,9 +238,6 @@
 (defword immediate:cell ()
   (emit-literal *cell-size*))
 
-(defword interpreted:jmp_buf ()
-  *jmp_buf-size*)
-
 (defword immediate:name_length ()
   (emit-literal *name-size*))
 

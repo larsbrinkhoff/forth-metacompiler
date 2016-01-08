@@ -15,7 +15,7 @@
 ;; VARIABLE VALUE CREATE ALLOT HERE , ' CELLS INVERT RSHIFT CHAR > = + -
 ;; [CHAR] ['] [ ] LITERAL POSTPONE COMPILE [COMPILE] 'DODOES TO IS ." S"
 ;; ABORT" AHEAD IF ELSE THEN DO LEAVE LOOP +LOOP BEGIN AGAIN WHILE REPEAT
-;; UNTIL CELL JMP_BUF NAME_LENGTH TO_NEXT TO_CODE TO_DOES TO_BODY
+;; UNTIL CELL NAME_LENGTH TO_NEXT TO_CODE TO_DOES TO_BODY
 ;; .CS
 
 ;;; Restrictions and special features:
@@ -180,7 +180,7 @@
   (:use)
   (:export ":" "?:" "FORWARD:" "DEFER" "VALUE" "CODE" "ALLOT" "," "'" ".(" "CR"
 	   "CELLS" "CREATE" "HERE" "+" "-" "1+" "CHAR" "VARIABLE" "CELL" "IS"
-	   "JMP_BUF" "]" "INVERT" "RSHIFT" "=" ">" "INCLUDE" "CONSTANT"))
+	   "]" "INVERT" "RSHIFT" "=" ">" "INCLUDE" "CONSTANT"))
 
 (defpackage :immediate
   (:use)
