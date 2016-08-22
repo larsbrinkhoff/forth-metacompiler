@@ -179,8 +179,8 @@
 (defpackage :interpreted
   (:use)
   (:export ":" "?:" "FORWARD:" "DEFER" "VALUE" "CODE" "ALLOT" "," "'" ".(" "CR"
-	   "CELLS" "CREATE" "HERE" "+" "-" "1+" "CHAR" "VARIABLE" "CELL" "IS"
-	   "]" "INVERT" "RSHIFT" "=" ">" "INCLUDE" "CONSTANT"))
+	   "CELLS" "CREATE" "HERE" "+" "-" "1+" "*" "CHAR" "VARIABLE" "CELL" "IS"
+	   "]" "INVERT" "RSHIFT" "=" ">" "INCLUDE" "CONSTANT" "LSHIFT"))
 
 (defpackage :immediate
   (:use)
