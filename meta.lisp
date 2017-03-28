@@ -1,4 +1,4 @@
-;;;; -*- lisp -*- Copyright 2004, 2013-2016 Lars Brinkhoff
+;;;; -*- lisp -*- Copyright 2004, 2013-2017 Lars Brinkhoff
 
 ;;; Meta compiler to C target.
 ;;
@@ -25,6 +25,14 @@
 ;;
 ;; CODE may be followed by a \ comment which specifies the generated C
 ;; function declaration.
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defpackage :meta
+  (:use :cl))
+
+(in-package :meta)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -66,9 +74,9 @@
 (defun output-extern (name)
   (output "extern struct word ~A_word;" (mangle-word name)))
 
-(defun compile-forth (&rest input-files
-		      &aux
-		      (output-file (output-name input-files)))
+(defun cl-user::compile-forth (&rest input-files
+			       &aux
+			       (output-file (output-name input-files)))
   (with-open-file (*output* output-file :direction :output
 			                :if-exists :supersede)
     (output-line "#include \"forth.h\"")
@@ -170,7 +178,6 @@
 (defun peek-word (&rest args)
   (setq *peeked-word* (apply #'read-word args)))
 
-#-ccl
 (defun whitespacep (char)
   (or (char= char #\Tab)
       (char= char #\Space)
