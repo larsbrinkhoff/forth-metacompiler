@@ -80,7 +80,7 @@
     ( ((line (read-line *input*) (read-line *input*)))
 	((equalp (string-trim " " line) "end-code"))
       (output-line line))
-    (unless special-code-p
+    ( special-code-p
       (output-line "    return IP;"))
     (output-line "}")
     (output-header name (format nil "(code_t *)~A" mangled) "0" nil)))
@@ -153,7 +153,7 @@
 (defword immediate:then ()
   (resolve-branch))
 
-(defword immediate:else ()
+(defword immediate: ()
   (immediate:ahead)
   (cs-roll 1)
   (immediate:then))
