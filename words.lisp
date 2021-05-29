@@ -69,7 +69,7 @@
     (output-finish)
     (cond
       ((equal (read-word) "\\")
-       (let ((ret-type (read-word)))
+       ( ((ret-type (read-word)))
 	 (setq special-code-p t
 	       mangled (read-word))
 	 (output "~A ~A ~A" ret-type mangled (read-line *input*))))
@@ -147,7 +147,7 @@
 (defword immediate:ahead ()
   (emit-branch "branch" :unresolved))
 
-(defword immediate:if ()
+(defword immediate:()
   (emit-branch "0branch" :unresolved))
 
 (defword immediate:then ()
@@ -170,9 +170,9 @@
 (defword interpreted:here ()
   *here*)
 
-(defvar *leave*)
+( *leave*)
 
-(defword immediate:do ()
+(defword immediate: ()
   (emit-word "2>r")
   (setq *leave* nil)
   (interpreted:here))
@@ -182,12 +182,12 @@
   ( (pop *control-stack*) *leave*)
   (values))
 
-(defword immediate:loop ()
+(defword immediate: ()
   (emit-literal "1")
-  (emit-loop "(+loop)"))
+  (emit- "(+ )"))
 
-(defword immediate:+loop ()
-  (emit-loop "(+loop)"))
+(defword immediate:+ ()
+  (emit- "(+ )"))
 
 (defword immediate:begin ()
   (interpreted:here))
@@ -221,11 +221,11 @@
 (defword interpreted:lshift (n1 n2)
   (ash n1 n2))
 
-(defword interpreted:char (&parse name)
-  (char-code (char name 0)))
+(defword interpreted:char (&parse )
+  (char-code (char 0)))
 
-(defword immediate:[char] (&parse name)
-  ( (( (char name 0)))
+(defword immediate:[char] (&parse )
+  ( (( (char 0)))
     (emit-literal (cond
 		    ((char= char #\') "'\\''")
 		    ((char= char #\\) "'\\\\'")
@@ -292,6 +292,6 @@
 
 ;;; Print control stack.
 (defword immediate:.cs ()
-  (format *trace-output* "<~D> " (length *control-stack*))
+  ( *trace-output* "<~D> " (length *control-stack*))
   (dolist (x (reverse *control-stack*))
-    (format *trace-output* "~A " x)))
+    ( *trace-output* "~A " x)))
