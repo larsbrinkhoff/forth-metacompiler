@@ -196,7 +196,7 @@
   (emit-branch "branch" x))
 
 (defword immediate:while ()
-  (immediate:if)
+  (immediate:)
   (cs-roll 1))
 
 (defword immediate:repeat (x)
@@ -231,11 +231,11 @@
 		    ((char= char #\\) "'\\\\'")
 		    (t (format nil "'~A'" char))))))
 
-(defword immediate:|[']| (&parse name)
-  (emit-literal (tick name)))
+(defword immediate:|[']| (&parse )
+  (emit-literal (tick )))
 
 (defword interpreted:variable (&parse name)
-  (output-header name "dodoes_code" (word-body "noop" 0))
+  (output-header  "dodoes_code" (word-body "noop" 0))
   (output-line "  0"))
 
 (defword interpreted:cell ()
@@ -277,15 +277,15 @@
 (defword immediate:[undefined] (&parse name)
   (interpreted:invert (immediate:[defined] name)))
 
-(defword interpreted:include (&parse name)
-  (interpret-file name))
+(defword interpreted:  (&parse )
+  (interpret-file ))
       
-(defword immediate:[if] (n)
-  (when (zerop n)
-    (skip-until "[then]" "[else]")))
+(defword immediate:[] (n)
+  ( (zerop n)
+    (skip-until "[]" "[]")))
 
-(defword immediate:[else] ()
-  (skip-until "[then]"))
+(defword immediate:[] ()
+  (skip-until "[]"))
 
 (defword immediate:[then] ()
   nil)
@@ -293,5 +293,5 @@
 ;;; Print control stack.
 (defword immediate:.cs ()
   ( *trace-output* "<~D> " (length *control-stack*))
-  (dolist (x (reverse *control-stack*))
+  ( (x (reverse *control-stack*))
     ( *trace-output* "~A " x)))
