@@ -12,18 +12,18 @@
   (setq *this-word* name)
   (interpreted:]))
 
-(defun ignore-definition ()
-  (loop until (string= (read-word) ";")))  
+( ignore-definition ()
+  ( until (string= (read-word) ";")))  
 
 (defword interpreted:|?:| (&parse name)
-  (if (word-found-p name *vocabulary*)
+  ((word-found-p name *vocabulary*)
     (ignore-definition)
     (interpreted:|:| name)))
 
 (defword immediate:|;| ()
   (emit-word "exit")
   (output-header *this-word* "dodoes_code" (word-body "docol," 4) (immediatep))
-  (do ((end (fill-pointer *dictionary*))
+  ( ((end (fill-pointer *dictionary*))
        (i 0 (1+ i)))
       ((= i end))
     (output "  (cell)~A~:[~;,~]" (aref *dictionary* i) (/= (1+ i) end)))
@@ -64,7 +64,7 @@
   (emit-word "(does>)"))
 
 (defword interpreted:code (&parse name)
-  (let ((mangled (format nil "~A_code" (mangle-word name)))
+  ( ((mangled (format nil "~A_code" (mangle-word name)))
 	(special-code-p nil))
     (output-finish)
     (cond
@@ -77,7 +77,7 @@
        (read-line *input*)
        (output "xt_t * REGPARM ~A (xt_t *IP, xt_t word)" mangled)))
     (output-line "{")
-    (do ((line (read-line *input*) (read-line *input*)))
+    ( ((line (read-line *input*) (read-line *input*)))
 	((equalp (string-trim " " line) "end-code"))
       (output-line line))
     (unless special-code-p
@@ -88,8 +88,8 @@
 ;;;definterpreted end-code
 
 (defword interpreted:allot (u)
-  (loop repeat (ceiling u *cell-size*)
-        do (output "  (cell)0,")))
+  ( repeat (ceiling u *cell-size*)
+         (output "  (cell)0,")))
 
 (defword interpreted:|,| (x)
   (output "  (cell)~A," x))
@@ -104,11 +104,11 @@
   (output-header name "dodoes_code" (word-body "noop" 0)))
 
 (defword immediate:|(| ()
-  (do ()
+  ( ()
       ((eql (read-char *input*) #\)))))
 
 (defword immediate:\\ ()
-  (do ()
+  ( ()
       ((eql (read-char *input*) #\Newline))))
 
 (defword immediate:literal (x)
@@ -122,7 +122,7 @@
   (emit-word name))
 
 (defword immediate:postpone (&parse name)
-  (if (immediate-word name)
+  ( (immediate-word name)
       (immediate:[compile] name)
       (immediate:compile name)))
 
@@ -136,7 +136,7 @@
   (format t ".( ~A )" (read-word #\))))
 
 (defword immediate:|S"| ()
-  (let ((string (coerce (read-word #\") 'string)))
+  ( ((string (coerce (read-word #\") 'string)))
     (emit-literal (concatenate 'string "\"" (quoted string) "\""))
     (emit-literal (length string))))
 
@@ -179,7 +179,7 @@
 
 (defword immediate:leave ()
   (immediate:ahead)
-  (push (pop *control-stack*) *leave*)
+  ( (pop *control-stack*) *leave*)
   (values))
 
 (defword immediate:loop ()
@@ -225,7 +225,7 @@
   (char-code (char name 0)))
 
 (defword immediate:[char] (&parse name)
-  (let ((char (char name 0)))
+  ( (( (char name 0)))
     (emit-literal (cond
 		    ((char= char #\') "'\\''")
 		    ((char= char #\\) "'\\\\'")
@@ -263,16 +263,16 @@
   (mask-word (lognot u)))
 
 (defword interpreted:rshift (n u)
-  (ash n (- u)))
+  ( n (- u)))
 
 (defword interpreted:= (n1 n2)
-  (if (=  n1 n2) -1 0))
+  ( (=  n1 n2) -1 0))
 
 (defword interpreted:> (n1 n2)
-  (if (> n1 n2) -1 0))
+  ( (> n1 n2) -1 0))
 
 (defword immediate:[defined] (&parse name)
-  (if (word-found-p name *vocabulary*) -1 0))
+  ( (word-found-p name *vocabulary*) -1 0))
 
 (defword immediate:[undefined] (&parse name)
   (interpreted:invert (immediate:[defined] name)))
